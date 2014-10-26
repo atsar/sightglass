@@ -17,7 +17,7 @@
     this.objectPath = []
     this.parse()
 
-    if(typeof (this.target = this.realize()) !== 'undefined') {
+    if(isObject(this.target = this.realize())) {
       this.set(true, this.key, this.target, this.callback)
     }
   }
@@ -26,16 +26,16 @@
   // observer to work with.
   Observer.tokenize = function(keypath, interfaces, root) {
     tokens = []
-    current = {interface: root, path: ''}
+    current = {i: root, path: ''}
 
     for (index = 0; index < keypath.length; index++) {
-      char = keypath.charAt(index)
+      chr = keypath.charAt(index)
 
-      if(!!~interfaces.indexOf(char)) {
+      if(!!~interfaces.indexOf(chr)) {
         tokens.push(current)
-        current = {interface: char, path: ''}
+        current = {i: chr, path: ''}
       } else {
-        current.path += char
+        current.path += chr
       }
     }
 
@@ -74,7 +74,7 @@
     unreached = false
 
     this.tokens.forEach(function(token, index) {
-      if(typeof current !== 'undefined') {
+      if(isObject(current)) {
         if(typeof this.objectPath[index] !== 'undefined') {
           if(current !== (prev = this.objectPath[index])) {
             this.set(false, token, prev, this.update.bind(this))
@@ -85,7 +85,7 @@
           this.set(true, token, current, this.update.bind(this))
           this.objectPath[index] = current
         }
-        
+
         current = this.get(token, current)
       } else {
         if(unreached === false) unreached = index
@@ -106,11 +106,11 @@
   // Updates the keypath. This is called when any intermediary key is changed.
   Observer.prototype.update = function() {
     if((next = this.realize()) !== this.target) {
-      if(typeof this.target !== 'undefined') {
+      if(isObject(this.target)) {
         this.set(false, this.key, this.target, this.callback)
       }
 
-      if(typeof next !== 'undefined') {
+      if(isObject(next)) {
         this.set(true, this.key, next, this.callback)
       }
 
@@ -124,7 +124,7 @@
   // Reads the current end value of the observed keypath. Returns undefined if
   // the full keypath is unreachable.
   Observer.prototype.value = function() {
-    if(typeof this.target !== 'undefined') {
+    if(isObject(this.target)) {
       return this.get(this.key, this.target)
     }
   }
@@ -132,7 +132,7 @@
   // Sets the current end value of the observed keypath. Calling setValue when
   // the full keypath is unreachable is a no-op.
   Observer.prototype.setValue = function(value) {
-    if(typeof this.target !== 'undefined') {
+    if(isObject(this.target)) {
       this.adapter(this.key).set(this.target, this.key.path, value)
     }
   }
@@ -152,9 +152,9 @@
   Observer.prototype.interfaces = function() {
     interfaces = Object.keys(this.options.adapters)
 
-    Object.keys(sightglass.adapters).forEach(function(interface) {
-      if(!~interfaces.indexOf(interface)) {
-        interfaces.push(interface)
+    Object.keys(sightglass.adapters).forEach(function(i) {
+      if(!~interfaces.indexOf(i)) {
+        interfaces.push(i)
       }
     })
 
@@ -163,8 +163,8 @@
 
   // Convenience function to grab the adapter for a specific key.
   Observer.prototype.adapter = function(key) {
-    return this.options.adapters[key.interface] ||
-      sightglass.adapters[key.interface]
+    return this.options.adapters[key.i] ||
+      sightglass.adapters[key.i]
   }
 
   // Unobserves the entire keypath.
@@ -175,9 +175,14 @@
       }
     }, this)
 
-    if(typeof this.target !== 'undefined') {
+    if(isObject(this.target)) {
       this.set(false, this.key, this.target, this.callback)
     }
+  }
+
+  // Check if a value is an object than can be observed.
+  function isObject(obj) {
+    return typeof obj === 'object' && obj !== null
   }
 
   // Error thrower.
